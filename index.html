@@ -15,74 +15,69 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.5rem 1rem;
+      padding: 1rem 0.5rem;
     }
 
     h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-
-    .teams {
-      display: flex;
-      gap: 1.5rem;
-      width: 100%;
-      max-width: 720px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .team {
-      flex: 1;
-      min-width: 280px;
-      max-width: 340px;
-      background: #16213e;
-      border-radius: 12px;
-      padding: 1.2rem;
-    }
-
-    .team h2 {
-      text-align: center;
       font-size: 1.4rem;
       margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 0.4rem 0.6rem;
+      width: 100%;
+      max-width: 480px;
+      align-items: center;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 1rem 0.8rem;
+    }
+
+    .grid h2 {
+      text-align: center;
+      font-size: 1.1rem;
+      padding-bottom: 0.4rem;
       border-bottom: 2px solid #0f3460;
     }
 
-    .category {
-      margin-bottom: 1.2rem;
+    .header-spacer {
+      /* empty top-left cell */
     }
 
-    .category h3 {
-      text-align: center;
-      font-size: 1.05rem;
+    .cat-label {
+      font-size: 0.95rem;
       color: #aaa;
-      margin-bottom: 0.4rem;
+      align-self: center;
+      padding-right: 0.3rem;
     }
 
-    .quota {
+    .cell {
       text-align: center;
-      font-size: 2rem;
+    }
+
+    .cell .quota-line {
+      font-size: 1.3rem;
       font-weight: bold;
-      margin-bottom: 0.5rem;
     }
 
-    .detail {
-      text-align: center;
-      font-size: 0.85rem;
+    .cell .quota-line .detail {
+      font-size: 0.75rem;
+      font-weight: normal;
       color: #888;
-      margin-bottom: 0.6rem;
     }
 
-    .buttons {
+    .cell .buttons {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      margin-top: 0.3rem;
     }
 
-    .buttons button {
+    .cell .buttons button {
       flex: 1;
-      padding: 0.7rem 0;
+      padding: 0.5rem 0;
       font-size: 1rem;
       font-weight: 600;
       border: none;
@@ -91,7 +86,7 @@
       transition: opacity 0.15s;
     }
 
-    .buttons button:active { opacity: 0.7; }
+    .cell .buttons button:active { opacity: 0.7; }
 
     .btn-success {
       background: #2ecc71;
@@ -103,16 +98,22 @@
       color: #fff;
     }
 
+    .cat-divider {
+      grid-column: 1 / -1;
+      border-top: 1px solid #0f3460;
+      margin: 0.3rem 0;
+    }
+
     .reset-wrap {
-      margin-top: 1.5rem;
+      margin-top: 1rem;
     }
 
     .btn-reset {
       background: none;
       border: 2px solid #555;
       color: #aaa;
-      padding: 0.6rem 1.5rem;
-      font-size: 0.95rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.9rem;
       border-radius: 8px;
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s;
@@ -127,10 +128,10 @@
 <body>
   <h1>Boule Zähler</h1>
 
-  <div class="teams" id="app"></div>
+  <div class="grid" id="app"></div>
 
   <div class="reset-wrap">
-    <button class="btn-reset" id="resetBtn">Spiel zurücksetzen</button>
+    <button class="btn-reset" id="resetBtn">Zurücksetzen</button>
   </div>
 
   <script>
@@ -176,40 +177,46 @@
 
     function buildDOM() {
       const app = document.getElementById('app');
+
+      // Header row: spacer | Team 1 | Team 2
+      app.innerHTML = '<div class="header-spacer"></div>';
       teams.forEach(team => {
-        const div = document.createElement('div');
-        div.className = 'team';
+        app.innerHTML += `<h2>${team}</h2>`;
+      });
 
-        let html = `<h2>${team}</h2>`;
-        categories.forEach(cat => {
+      categories.forEach((cat, ci) => {
+        // Divider between categories
+        if (ci > 0) {
+          app.innerHTML += '<div class="cat-divider"></div>';
+        }
+
+        // Category label in column 1
+        app.innerHTML += `<div class="cat-label">${cat}</div>`;
+
+        // Quota + detail row for each team
+        teams.forEach(team => {
           const k = key(team, cat);
-          html += `
-            <div class="category">
-              <h3>${cat}</h3>
-              <div class="quota" id="q-${k}"></div>
-              <div class="detail" id="d-${k}"></div>
-              <div class="buttons">
-                <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">Erfolg</button>
-                <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">Fehlschlag</button>
-              </div>
-            </div>`;
+          app.innerHTML += `<div class="cell" id="cell-${k}">
+            <div class="quota-line"><span id="q-${k}"></span> <span class="detail" id="d-${k}"></span></div>
+            <div class="buttons">
+              <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">✓</button>
+              <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">✗</button>
+            </div>
+          </div>`;
         });
+      });
 
-        div.innerHTML = html;
-
-        div.querySelectorAll('button[data-team]').forEach(btn => {
-          let lastClick = 0;
-          btn.addEventListener('click', () => {
-            const now = Date.now();
-            if (now - lastClick < 80) return;
-            lastClick = now;
-            data[btn.dataset.team][btn.dataset.cat][btn.dataset.type]++;
-            save();
-            update();
-          });
+      // Attach click handlers
+      app.querySelectorAll('button[data-team]').forEach(btn => {
+        let lastClick = 0;
+        btn.addEventListener('click', () => {
+          const now = Date.now();
+          if (now - lastClick < 80) return;
+          lastClick = now;
+          data[btn.dataset.team][btn.dataset.cat][btn.dataset.type]++;
+          save();
+          update();
         });
-
-        app.appendChild(div);
       });
     }
 
@@ -220,7 +227,7 @@
           const total = d.success + d.fail;
           const k = key(team, cat);
           document.getElementById(`q-${k}`).textContent = pct(d.success, d.fail);
-          document.getElementById(`d-${k}`).textContent = `${d.success} von ${total} erfolgreich`;
+          document.getElementById(`d-${k}`).textContent = total > 0 ? `(${d.success}/${total})` : '';
         });
       });
     }
