@@ -170,26 +170,24 @@
       return Math.round((s / total) * 100) + '%';
     }
 
-    function render() {
-      const app = document.getElementById('app');
-      app.innerHTML = '';
+    function key(team, cat) {
+      return `${teams.indexOf(team)}-${categories.indexOf(cat)}`;
+    }
 
+    function buildDOM() {
+      const app = document.getElementById('app');
       teams.forEach(team => {
         const div = document.createElement('div');
         div.className = 'team';
 
         let html = `<h2>${team}</h2>`;
-
         categories.forEach(cat => {
-          const d = data[team][cat];
-          const total = d.success + d.fail;
-          const quota = pct(d.success, d.fail);
-
+          const k = key(team, cat);
           html += `
             <div class="category">
               <h3>${cat}</h3>
-              <div class="quota">${quota}</div>
-              <div class="detail">${d.success} von ${total} erfolgreich</div>
+              <div class="quota" id="q-${k}"></div>
+              <div class="detail" id="d-${k}"></div>
               <div class="buttons">
                 <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">Erfolg</button>
                 <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">Fehlschlag</button>
@@ -202,23 +200,40 @@
       });
     }
 
+    function update() {
+      teams.forEach(team => {
+        categories.forEach(cat => {
+          const d = data[team][cat];
+          const total = d.success + d.fail;
+          const k = key(team, cat);
+          document.getElementById(`q-${k}`).textContent = pct(d.success, d.fail);
+          document.getElementById(`d-${k}`).textContent = `${d.success} von ${total} erfolgreich`;
+        });
+      });
+    }
+
+    function reset() {
+      data = defaultData();
+      save();
+      update();
+    }
+
     document.getElementById('app').addEventListener('click', e => {
       const btn = e.target.closest('button[data-team]');
       if (!btn) return;
       const { team, cat, type } = btn.dataset;
       data[team][cat][type]++;
       save();
-      render();
+      update();
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
       if (!confirm('Spiel wirklich zurücksetzen?')) return;
-      data = defaultData();
-      save();
-      render();
+      reset();
     });
 
-    render();
+    buildDOM();
+    update();
   </script>
 </body>
 </html>
