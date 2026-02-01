@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boule Zähler</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .teams {
+      display: flex;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 720px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .team {
+      flex: 1;
+      min-width: 280px;
+      max-width: 340px;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+
+    .team h2 {
+      text-align: center;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #0f3460;
+    }
+
+    .category {
+      margin-bottom: 1.2rem;
+    }
+
+    .category h3 {
+      text-align: center;
+      font-size: 1.05rem;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+    }
+
+    .quota {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .detail {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 0.6rem;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .buttons button {
+      flex: 1;
+      padding: 0.7rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .buttons button:active { opacity: 0.7; }
+
+    .btn-success {
+      background: #2ecc71;
+      color: #fff;
+    }
+
+    .btn-fail {
+      background: #e74c3c;
+      color: #fff;
+    }
+
+    .reset-wrap {
+      margin-top: 1.5rem;
+    }
+
+    .btn-reset {
+      background: none;
+      border: 2px solid #555;
+      color: #aaa;
+      padding: 0.6rem 1.5rem;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-reset:hover {
+      border-color: #e74c3c;
+      color: #e74c3c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Boule Zähler</h1>
+
+  <div class="teams" id="app"></div>
+
+  <div class="reset-wrap">
+    <button class="btn-reset" id="resetBtn">Spiel zurücksetzen</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'boule_data';
+
+    const teams = ['Team 1', 'Team 2'];
+    const categories = ['Legen', 'Schießen'];
+
+    function defaultData() {
+      const d = {};
+      teams.forEach(t => {
+        d[t] = {};
+        categories.forEach(c => {
+          d[t][c] = { success: 0, fail: 0 };
+        });
+      });
+      return d;
+    }
+
+    function load() {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (_) {}
+      return defaultData();
+    }
+
+    function save() {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    let data = load();
+
+    function pct(s, f) {
+      const total = s + f;
+      if (total === 0) return '–';
+      return Math.round((s / total) * 100) + '%';
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      app.innerHTML = '';
+
+      teams.forEach(team => {
+        const div = document.createElement('div');
+        div.className = 'team';
+
+        let html = `<h2>${team}</h2>`;
+
+        categories.forEach(cat => {
+          const d = data[team][cat];
+          const total = d.success + d.fail;
+          const quota = pct(d.success, d.fail);
+
+          html += `
+            <div class="category">
+              <h3>${cat}</h3>
+              <div class="quota">${quota}</div>
+              <div class="detail">${d.success} von ${total} erfolgreich</div>
+              <div class="buttons">
+                <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">Erfolg</button>
+                <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">Fehlschlag</button>
+              </div>
+            </div>`;
+        });
+
+        div.innerHTML = html;
+        app.appendChild(div);
+      });
+    }
+
+    document.getElementById('app').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-team]');
+      if (!btn) return;
+      const { team, cat, type } = btn.dataset;
+      data[team][cat][type]++;
+      save();
+      render();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (!confirm('Spiel wirklich zurücksetzen?')) return;
+      data = defaultData();
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
