@@ -196,6 +196,19 @@
         });
 
         div.innerHTML = html;
+
+        div.querySelectorAll('button[data-team]').forEach(btn => {
+          let lastClick = 0;
+          btn.addEventListener('click', () => {
+            const now = Date.now();
+            if (now - lastClick < 80) return;
+            lastClick = now;
+            data[btn.dataset.team][btn.dataset.cat][btn.dataset.type]++;
+            save();
+            update();
+          });
+        });
+
         app.appendChild(div);
       });
     }
@@ -217,15 +230,6 @@
       save();
       update();
     }
-
-    document.getElementById('app').addEventListener('click', e => {
-      const btn = e.target.closest('button[data-team]');
-      if (!btn) return;
-      const { team, cat, type } = btn.dataset;
-      data[team][cat][type]++;
-      save();
-      update();
-    });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
       if (!confirm('Spiel wirklich zurücksetzen?')) return;
