@@ -24,69 +24,66 @@
       text-align: center;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: auto 1fr 1fr;
-      gap: 0.4rem 0.6rem;
+    .container {
       width: 100%;
       max-width: 480px;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .team-card {
       background: #16213e;
       border-radius: 12px;
-      padding: 1rem 0.8rem;
+      padding: 0.8rem;
     }
 
-    .grid h2 {
-      text-align: center;
+    .team-header {
       font-size: 1.1rem;
-      padding-bottom: 0.4rem;
-      border-bottom: 2px solid #0f3460;
+      font-weight: 600;
+      margin-bottom: 0.6rem;
     }
 
-    .header-spacer {
-      /* empty top-left cell */
+    .cat-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
     }
+
+    .cat-row:last-child { margin-bottom: 0; }
 
     .cat-label {
-      font-size: 0.95rem;
+      font-size: 0.85rem;
+      min-width: 4rem;
       color: #aaa;
-      align-self: center;
-      padding-right: 0.3rem;
     }
 
-    .cell {
+    .quota-line {
+      flex: 1;
+      font-size: 1.15rem;
+      font-weight: bold;
       text-align: center;
     }
 
-    .cell .quota-line {
-      font-size: 1.3rem;
-      font-weight: bold;
-    }
-
-    .cell .quota-line .detail {
+    .quota-line .detail {
       font-size: 0.75rem;
       font-weight: normal;
       color: #888;
     }
 
-    .cell .buttons {
-      display: flex;
-      gap: 0.4rem;
-      margin-top: 0.3rem;
-    }
-
-    .cell .buttons button {
-      flex: 1;
-      padding: 0.5rem 0;
-      font-size: 1rem;
+    .cat-row button {
+      padding: 0.7rem 1.4rem;
+      font-size: 1.3rem;
       font-weight: 600;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       transition: opacity 0.15s;
+      flex-shrink: 0;
     }
 
-    .cell .buttons button:active { opacity: 0.7; }
+    .cat-row button:active { opacity: 0.7; }
 
     .btn-success {
       background: #2ecc71;
@@ -96,12 +93,6 @@
     .btn-fail {
       background: #e74c3c;
       color: #fff;
-    }
-
-    .cat-divider {
-      grid-column: 1 / -1;
-      border-top: 1px solid #0f3460;
-      margin: 0.3rem 0;
     }
 
     .reset-wrap {
@@ -128,7 +119,7 @@
 <body>
   <h1>Boule Zähler</h1>
 
-  <div class="grid" id="app"></div>
+  <div class="container" id="app"></div>
 
   <div class="reset-wrap">
     <button class="btn-reset" id="resetBtn">Zurücksetzen</button>
@@ -177,36 +168,27 @@
 
     function buildDOM() {
       const app = document.getElementById('app');
+      let html = '';
 
-      // Header row: spacer | Team 1 | Team 2
-      app.innerHTML = '<div class="header-spacer"></div>';
       teams.forEach(team => {
-        app.innerHTML += `<h2>${team}</h2>`;
-      });
+        html += '<div class="team-card">';
+        html += `<div class="team-header">${team}</div>`;
 
-      categories.forEach((cat, ci) => {
-        // Divider between categories
-        if (ci > 0) {
-          app.innerHTML += '<div class="cat-divider"></div>';
-        }
-
-        // Category label in column 1
-        app.innerHTML += `<div class="cat-label">${cat}</div>`;
-
-        // Quota + detail row for each team
-        teams.forEach(team => {
+        categories.forEach(cat => {
           const k = key(team, cat);
-          app.innerHTML += `<div class="cell" id="cell-${k}">
-            <div class="quota-line"><span id="q-${k}"></span> <span class="detail" id="d-${k}"></span></div>
-            <div class="buttons">
-              <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">✓</button>
-              <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">✗</button>
-            </div>
+          html += `<div class="cat-row">
+            <span class="cat-label">${cat}</span>
+            <button class="btn-success" data-team="${team}" data-cat="${cat}" data-type="success">✓</button>
+            <span class="quota-line"><span id="q-${k}"></span> <span class="detail" id="d-${k}"></span></span>
+            <button class="btn-fail" data-team="${team}" data-cat="${cat}" data-type="fail">✗</button>
           </div>`;
         });
+
+        html += '</div>';
       });
 
-      // Attach click handlers
+      app.innerHTML = html;
+
       app.querySelectorAll('button[data-team]').forEach(btn => {
         let lastClick = 0;
         btn.addEventListener('click', () => {
